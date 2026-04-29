@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin(studioId) {
+      // For V1, the user who created the studio or the hardcoded admin email.
+      return isVerified() && (
+        request.auth.token.email == 'grafica.cjs@gmail.com' ||
+        get(/databases/$(database)/documents/studios/$(studioId)).data.email == request.auth.token.email
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Studio Rules
+    match /studios/{studioId} {
+      allow get: if true; // Publicly readable for the booking page
+      allow list: if true; // Needed to find studio by slug
+      allow update, delete: if isAdmin(studioId);
+      allow create: if isVerified(); // Anyone verified can create their studio
+    }
+
+    // Services Rules
+    match /studios/{studioId}/servicos/{servicoId} {
+      allow list, get: if true; // Publicly readable to see services
+      allow write: if isAdmin(studioId);
+    }
+
+    // Package Templates Rules
+    match /studios/{studioId}/pacotes/{pacoteId} {
+      allow list, get: if true; // Publicly readable to see packages
+      allow write: if isAdmin(studioId);
+    }
+
+    // Client Rules
+    match /studios/{studioId}/clientes/{clienteId} {
+      allow get, list, write: if isAdmin(studioId);
+      // Special case: During public booking, a new client document might be created
+      allow create: if true; // We validate this in the app
+    }
+
+    // Client Packages Rules
+    match /studios/{studioId}/pacotes_clientes/{pacoteClienteId} {
+      allow read, write: if isAdmin(studioId);
+    }
+
+    // Appointments Rules
+    match /studios/{studioId}/agendamentos/{agendamentoId} {
+      allow list: if true; // To check availability (we should query by studio and date)
+      allow get: if true;
+      allow create: if true; // Public booking
+      allow update, delete: if isAdmin(studioId);
+    }
+  }
+}

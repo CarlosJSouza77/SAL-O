@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "Studio": {
+      "title": "Studio",
+      "description": "Represents a beauty studio (tenant).",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "slug": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "senha_hash": { "type": "string" },
+        "whatsapp": { "type": "string", "description": "Studio contact number for booking confirmations." },
+        "horario_inicio": { "type": "string", "description": "e.g., '08:00'" },
+        "horario_fim": { "type": "string", "description": "e.g., '19:00'" },
+        "intervalo_min": { "type": "integer", "description": "Slot duration in minutes." },
+        "criado_em": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nome", "slug", "email", "senha_hash", "whatsapp"]
+    },
+    "Servico": {
+      "title": "Servico",
+      "description": "A service offered by the studio.",
+      "type": "object",
+      "properties": {
+        "studio_id": { "type": "string" },
+        "nome": { "type": "string" },
+        "preco": { "type": "number" },
+        "duracao_min": { "type": "integer" },
+        "ativo": { "type": "boolean" }
+      },
+      "required": ["studio_id", "nome", "preco", "duracao_min"]
+    },
+    "Pacote": {
+      "title": "Pacote",
+      "description": "A session package template.",
+      "type": "object",
+      "properties": {
+        "studio_id": { "type": "string" },
+        "nome": { "type": "string" },
+        "sessoes": { "type": "integer" },
+        "preco": { "type": "number" },
+        "validade_dias": { "type": "integer" },
+        "ativo": { "type": "boolean" }
+      },
+      "required": ["studio_id", "nome", "sessoes", "preco", "validade_dias"]
+    },
+    "Cliente": {
+      "title": "Cliente",
+      "description": "A client of the studio.",
+      "type": "object",
+      "properties": {
+        "studio_id": { "type": "string" },
+        "nome": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "criado_em": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studio_id", "nome", "whatsapp"]
+    },
+    "PacoteCliente": {
+      "title": "PacoteCliente",
+      "description": "A package purchased by a client.",
+      "type": "object",
+      "properties": {
+        "cliente_id": { "type": "string" },
+        "pacote_id": { "type": "string" },
+        "sessoes_usadas": { "type": "integer" },
+        "data_compra": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["ativo", "concluido", "vencido"] }
+      },
+      "required": ["cliente_id", "pacote_id", "data_compra", "status"]
+    },
+    "Agendamento": {
+      "title": "Agendamento",
+      "description": "An appointment booked by a client.",
+      "type": "object",
+      "properties": {
+        "studio_id": { "type": "string" },
+        "servico_id": { "type": "string" },
+        "cliente_id": { "type": "string" },
+        "pacote_cliente_id": { "type": "string" },
+        "data": { "type": "string", "format": "date" },
+        "horario": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmado", "realizado", "cancelado"] },
+        "criado_em": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studio_id", "servico_id", "cliente_id", "data", "horario", "status"]
+    }
+  },
+  "firestore": {
+    "/studios/{studioId}": { "schema": "Studio", "description": "Studio configurations." },
+    "/studios/{studioId}/servicos/{servicoId}": { "schema": "Servico", "description": "Services offered by the studio." },
+    "/studios/{studioId}/pacotes/{pacoteId}": { "schema": "Pacote", "description": "Package templates." },
+    "/studios/{studioId}/clientes/{clienteId}": { "schema": "Cliente", "description": "Studio clients." },
+    "/studios/{studioId}/pacotes_clientes/{pacoteClienteId}": { "schema": "PacoteCliente", "description": "Client purchased packages." },
+    "/studios/{studioId}/agendamentos/{agendamentoId}": { "schema": "Agendamento", "description": "History of appointments." }
+  }
+}
